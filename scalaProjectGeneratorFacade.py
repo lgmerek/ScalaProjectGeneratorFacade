@@ -63,13 +63,15 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
                 item[0], item[1], self.on_propetySelected, None, None)
         else:
             self.propertyIndex = 0
-            g8Command = buildCommand('gitter', additionalData=[
-                self.selectedTemplateName, self.templateUserProps])
-
-            g8Thread = CommandThread(g8Command, self.projectPath, False)
-            g8Thread.start()
-            self.handleGiterThread(
-                g8Thread, 100, "Giter", 'Giter Template generation')
+            try:
+                g8Command = buildCommand('gitter', additionalData=[
+                    self.selectedTemplateName, self.templateUserProps])
+                g8Thread = CommandThread(g8Command, self.projectPath, False)
+                g8Thread.start()
+                self.handleGiterThread(
+                    g8Thread, 100, "Giter", 'Giter Template generation')
+            except subprocess.CalledProcessError:
+                self.logger.info("Gitter command not found")
 
     def handleGiterThread(self, thread, timeout, key, message, i=0, dir=1):
         if thread.is_alive():

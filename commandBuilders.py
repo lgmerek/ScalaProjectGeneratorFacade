@@ -1,6 +1,8 @@
 import subprocess
 import os
+from .logger import LoggerFacade
 
+logger = LoggerFacade.getLogger()
 
 def buildCommand(commandName, additionalData=[]):
     if commandName == 'gitter':
