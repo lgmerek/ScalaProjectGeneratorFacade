@@ -1,0 +1,18 @@
+{
+	"fayimora/basic-scala-project": {
+		"params" :  {
+			"name" : "Basic Project",
+			"organization" : "com.example",
+			"version" : "0.0.1",
+			"description" : "A basic scala project"
+		}
+	},
+	"jackywyz/sbtweb-app.g8.git": {
+		"params" : {
+			"name" : "sbtweb-app.g8",
+			"description" : "sbt web app with g8",
+			"scala_version" : "2.10.3",
+			"sbt_version" : "0.13"
+		}
+	}
+}
