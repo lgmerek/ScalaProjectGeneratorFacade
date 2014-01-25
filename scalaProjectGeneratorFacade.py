@@ -1,13 +1,12 @@
 import sublime
-import logging
 import sublime_plugin
 import subprocess
 import sys
 from array import *
-from .sbtTemplateDataJsonDecoder import SbtTemplateDataJsonDecoder
 from .giterCommandThread import CommandThread
 from .commandBuilders import buildCommand
-import logging.config
+from .jsonDecoderBuilder import JsonDecoderBuilder
+from .logger import LoggerFacade
 
 
 class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
@@ -15,7 +14,7 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
     def __init__(self, k):
         sublime_plugin.TextCommand.__init__(self, k)
         self.ProjectNamePrefix = "SBT Template: "
-        self.jsonDataDecoder = self.createJsonDecoder()
+        self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
         self.sbtTemplates = [
             self.ProjectNamePrefix + t for t in
             self.jsonDataDecoder.getProjectTemplatesNames()]
@@ -25,14 +24,11 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         self.projectPath = ''
         self.ProjectBaseDir = ''
         self.propertyIndex = 0
-        self.logger = self._configureLogging()
+        self.logger = LoggerFacade.getLogger()
 
-    def _configureLogging(self):
-        logging.config.fileConfig('logging.conf')
-        return logging.getLogger('sbtGenerator')
 
     def run(self, edit):
-        self.logger.debug('KUPA KUPA KUPA')
+        self.logger.debug('\n\n----- Scala Project Generator Facade has started -----\n\n')
         self.view.window().show_quick_panel(
             self.sbtTemplates, self.on_projectTemplateSelected)
 
@@ -126,10 +122,6 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             key, message + ' [%s=%s]' % (' ' * before, ' ' * after))
         return (i, dir)
 
-    def __readJsonDataFromFile(self, jsonFile):
-        with open(jsonFile, "r") as jsonFile:
-            return jsonFile.read().replace('\n', ' ')
-
     def get_sublime_path(self):
         if sublime.platform() == 'osx':
             return findCommandPath('subl')
@@ -140,11 +132,6 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
     def sublime_command_line(self, args):
         args.insert(0, self.get_sublime_path())
         return subprocess.Popen(args)
-
-    def createJsonDecoder(self):
-        jsonData = self.__readJsonDataFromFile(
-            "/Users/welder/Library/Application Support/Sublime Text 3/Packages/SbtProjectGenerator/sbtTemplates.json")
-        return SbtTemplateDataJsonDecoder(jsonData)
 
     def modifySbtBuildFile(self):
         settings = '\n\nsublimeExternalSourceDirectoryName := "ext-lib-src" \n\n sublimeExternalSourceDirectoryParent <<= baseDirectory \n\n sublimeTransitive := true\n'
