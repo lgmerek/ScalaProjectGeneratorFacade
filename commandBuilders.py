@@ -1,8 +1,9 @@
 import subprocess
-import os
 from .logger import LoggerFacade
 
+
 logger = LoggerFacade.getLogger()
+
 
 def buildCommand(commandName, additionalData=[]):
     if commandName == 'gitter':
@@ -21,21 +22,21 @@ def _giterBuilder(additionalData):
 
 class _GiterCommandBuilder():
 
-    def __init__(self, g8Path, templateName, templateUserProperites):
+    def __init__(self, g8Path, templateName, templateUserProperties):
         self.g8Path = g8Path
         self.templateName = templateName
-        self.templateUserProperites = templateUserProperites
+        self.templateUserProperties = templateUserProperties
 
     def buildGiterCommand(self):
         g8Command = []
         g8Command.append(self.g8Path)
         g8Command.append(self.templateName)
-        for p in self.templateUserProperites:
+        for p in self.templateUserProperties:
             g8Command.append(self.__buildParam(p))
         return g8Command
 
     def __buildParam(self, p):
-        param = "--" + p[0] + "=" + p[1]
+        param = '--' + p[0] + '=' + '"' + p[1] + '"'
         return param
 
 

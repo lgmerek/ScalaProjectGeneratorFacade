@@ -26,7 +26,6 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         self.propertyIndex = 0
         self.logger = LoggerFacade.getLogger()
 
-
     def run(self, edit):
         self.logger.debug('\n\n----- Scala Project Generator Facade has started -----\n\n')
         self.view.window().show_quick_panel(
@@ -80,12 +79,15 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
                 lambda: self.handleGiterThread(thread, 100, key, message, a[0], a[1]))
         else:
             self.view.set_status(key, '')
-            sbtEnsimeCommand = buildCommand('ensime')
-            sbtEnsimeThread = CommandThread(
-                sbtEnsimeCommand, self.ProjectBaseDir, True)
-            sbtEnsimeThread.start()
-            self.handleSbtEnsimeThread(
-                sbtEnsimeThread, 100, "Ensime", "Ensime confiugration")
+            try:
+                sbtEnsimeCommand = buildCommand('ensime')
+                sbtEnsimeThread = CommandThread(
+                    sbtEnsimeCommand, self.ProjectBaseDir, True)
+                sbtEnsimeThread.start()
+                self.handleSbtEnsimeThread(
+                    sbtEnsimeThread, 100, "Ensime", "Ensime confiugration")
+            except subprocess.CalledProcessError:
+                self.logger.info("Ensime command not found")
 
     def handleSbtEnsimeThread(self, thread, timeout, key, message, i=0, dir=1):
         if thread.is_alive():
