@@ -1,6 +1,6 @@
-import os
 from .logger import LoggerFacade
 from .sbtTemplateDataJsonDecoder import SbtTemplateDataJsonDecoder
+from .generatorFacadeExceptions import GeneratorFacadeInitializationError
 
 
 class JsonDecoderBuilder:
@@ -14,7 +14,9 @@ class JsonDecoderBuilder:
 
     def createJsonDecoder(self):
         self.logger.debug("Json Decoder creation")
-        self.logger.debug("Current Working Directory %s", os.getcwd())
-        jsonData = self.__readJsonDataFromFile(
-            "sbtTemplates.json")
+        try:
+            jsonData = self.__readJsonDataFromFile(
+                "sbtTemplatesxx.json")
+        except (OSError, IOError) as e:
+            raise GeneratorFacadeInitializationError('Generator Facade Initilization Error -> ', str(e))
         return SbtTemplateDataJsonDecoder(jsonData)

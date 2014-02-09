@@ -9,6 +9,7 @@ from .commandBuilders import buildCommand
 from .jsonDecoderBuilder import JsonDecoderBuilder
 from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
+from .generatorFacadeExceptions import GeneratorFacadeInitializationError
 
 
 class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
@@ -24,6 +25,7 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         self.propertyIndex = 0
 
     def __initProjectGeneratorFacade(self):
+        self.logger.info("Generator initialization started")
         self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
         self.sbtTemplates = [
             self.ProjectNamePrefix + t for t in
@@ -32,9 +34,13 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.logger = LoggerFacade.getLogger()
         self.logger.debug('\n\n----- Scala Project Generator Facade has started -----\n\n')
-        self.__initProjectGeneratorFacade()
-        self.view.window().show_quick_panel(
-            self.sbtTemplates, self.on_projectTemplateSelected)
+        try:
+            self.__initProjectGeneratorFacade()
+            self.view.window().show_quick_panel(
+                self.sbtTemplates, self.on_projectTemplateSelected)
+        except GeneratorFacadeInitializationError as e:
+            self.logger.error(e.message + e.causedBy)
+
 
     def on_projectTemplateSelected(self, user_input):
         # this if is only temporary workaround for Sublime 3 Beta API problem with
