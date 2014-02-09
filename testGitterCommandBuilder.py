@@ -1,5 +1,5 @@
 import unittest
-from guiterCommandBuilder import *
+from .guiterCommandBuilder import *
 
 
 class TestGiterCommandBuilder(unittest.TestCase):
@@ -15,6 +15,3 @@ class TestGiterCommandBuilder(unittest.TestCase):
         command = self.g8Command.buildGiterCommand()
         self.assertEqual(
             command, ["g8", "template/main", "--p1=v1", "--p2=v2"])
-
-if __name__ == '__main__':
-    unittest.main()

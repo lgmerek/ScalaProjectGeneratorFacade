@@ -1,8 +1,4 @@
 import subprocess
-from .logger import LoggerFacade
-
-
-logger = LoggerFacade.getLogger()
 
 
 def buildCommand(commandName, additionalData=[]):
@@ -36,7 +32,7 @@ class _GiterCommandBuilder():
         return g8Command
 
     def __buildParam(self, p):
-        param = '--' + p[0] + '=' + '"' + p[1] + '"'
+        param = '--' + p[0] + '=' + p[1]
         return param
 
 

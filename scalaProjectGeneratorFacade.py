@@ -2,10 +2,12 @@ import sublime
 import sublime_plugin
 import subprocess
 import sys
+import re
 from array import *
 from .giterCommandThread import CommandThread
 from .commandBuilders import buildCommand
 from .jsonDecoderBuilder import JsonDecoderBuilder
+from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
 
 
@@ -14,20 +16,23 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
     def __init__(self, k):
         sublime_plugin.TextCommand.__init__(self, k)
         self.ProjectNamePrefix = "SBT Template: "
-        self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
-        self.sbtTemplates = [
-            self.ProjectNamePrefix + t for t in
-            self.jsonDataDecoder.getProjectTemplatesNames()]
         self.templateDefaultProperties = []
         self.templateUserProps = []
         self.selectedTemplateName = ''
         self.projectPath = ''
         self.ProjectBaseDir = ''
         self.propertyIndex = 0
-        self.logger = LoggerFacade.getLogger()
+
+    def __initProjectGeneratorFacade(self):
+        self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
+        self.sbtTemplates = [
+            self.ProjectNamePrefix + t for t in
+            self.jsonDataDecoder.getProjectTemplatesNames()]
 
     def run(self, edit):
+        self.logger = LoggerFacade.getLogger()
         self.logger.debug('\n\n----- Scala Project Generator Facade has started -----\n\n')
+        self.__initProjectGeneratorFacade()
         self.view.window().show_quick_panel(
             self.sbtTemplates, self.on_projectTemplateSelected)
 
@@ -52,8 +57,11 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def on_propetySelected(self, user_input):
         prop = self.templateDefaultProperties[self.propertyIndex]
+        g8ProjectDirName = ''
         if prop[0] == 'name':
-            self.ProjectBaseDir = self.projectPath + '/' + user_input
+            g8ProjectDirName = re.sub("\s+", '-', user_input).lower()
+            self.logger.debug("g8ProjectDirName %s", g8ProjectDirName)
+            self.ProjectBaseDir = self.projectPath + '/' + g8ProjectDirName
         self.templateUserProps.append((prop[0], user_input))
         self.propertyIndex += 1
         if self.propertyIndex < len(self.templateDefaultProperties):
@@ -138,9 +146,12 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         return subprocess.Popen(args)
 
     def modifySbtBuildFile(self):
-        settings = '\n\nsublimeExternalSourceDirectoryName := "ext-lib-src" \n\n sublimeExternalSourceDirectoryParent <<= baseDirectory \n\n sublimeTransitive := true\n'
-        with open(self.ProjectBaseDir + "/build.sbt", "a") as buildSbt:
-            buildSbt.write(settings)
+        sbtFile = open(self.ProjectBaseDir + "/build.sbt", "a")
+        sbtFileEditor = SbtBuildFileEditor(sbtFile)
+        sbtFileEditor.simpleTransformationBatch(
+            [('sublimeExternalSourceDirectoryName', '"ext-lib-src"'), ('sublimeTransitive', 'true')])
+        sbtFileEditor.transformUsingOtherKey(('sublimeExternalSourceDirectoryParent', 'baseDirectory'))
+        sbtFile.close()
 
 
 def findCommandPath(command):
