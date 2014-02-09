@@ -16,7 +16,7 @@ class JsonDecoderBuilder:
         self.logger.debug("Json Decoder creation")
         try:
             jsonData = self.__readJsonDataFromFile(
-                "sbtTemplatesxx.json")
+                "sbtTemplates.json")
         except (OSError, IOError) as e:
             raise GeneratorFacadeInitializationError('Generator Facade Initilization Error -> ', str(e))
         return SbtTemplateDataJsonDecoder(jsonData)
