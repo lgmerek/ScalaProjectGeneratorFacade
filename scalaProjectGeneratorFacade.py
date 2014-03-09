@@ -10,6 +10,7 @@ from .jsonDecoderBuilder import JsonDecoderBuilder
 from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
 from .generatorFacadeExceptions import GeneratorFacadeInitializationError
+from functools import *
 
 
 class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
@@ -33,14 +34,14 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         self.logger = LoggerFacade.getLogger()
-        self.logger.debug('\n\n----- Scala Project Generator Facade has started -----\n\n')
+        self.logger.debug(
+            '\n\n----- Scala Project Generator Facade has started -----\n\n')
         try:
             self.__initProjectGeneratorFacade()
             self.view.window().show_quick_panel(
                 self.sbtTemplates, self.on_projectTemplateSelected)
         except GeneratorFacadeInitializationError as e:
             self.logger.error(e.message + e.causedBy)
-
 
     def on_projectTemplateSelected(self, user_input):
         # this if is only temporary workaround for Sublime 3 Beta API problem with
@@ -76,57 +77,54 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
                 item[0], item[1], self.on_propetySelected, None, None)
         else:
             self.propertyIndex = 0
-            try:
-                g8Command = buildCommand('gitter', additionalData=[
-                    self.selectedTemplateName, self.templateUserProps])
-                g8Thread = CommandThread(g8Command, self.projectPath, False)
-                g8Thread.start()
-                self.handleGiterThread(
-                    g8Thread, 100, "Giter", 'Giter Template generation')
-            except subprocess.CalledProcessError:
-                self.logger.info("Gitter command not found")
+            self.gitterThread()
 
-    def handleGiterThread(self, thread, timeout, key, message, i=0, dir=1):
+    def handleThread(self, thread, timeout, key, message, handleLiveThread, nextStep, i=0, dir=1):
         if thread.is_alive():
-            a = self.animate(key, message, i, dir)
-            sublime.set_timeout(
-                lambda: self.handleGiterThread(thread, 100, key, message, a[0], a[1]))
+            handleLiveThread(key, message, partial(self.handleThread,
+                                                   thread, 100, key, message, handleLiveThread, nextStep), i, dir)
         else:
             self.view.set_status(key, '')
-            try:
-                sbtEnsimeCommand = buildCommand('ensime')
-                sbtEnsimeThread = CommandThread(
-                    sbtEnsimeCommand, self.ProjectBaseDir, True)
-                sbtEnsimeThread.start()
-                self.handleSbtEnsimeThread(
-                    sbtEnsimeThread, 100, "Ensime", "Ensime confiugration")
-            except subprocess.CalledProcessError:
-                self.logger.info("Ensime command not found")
+            nextStep()
 
-    def handleSbtEnsimeThread(self, thread, timeout, key, message, i=0, dir=1):
-        if thread.is_alive():
-            a = self.animate(key, message, i, dir)
-            sublime.set_timeout(
-                lambda: self.handleSbtEnsimeThread(thread, 100, key, message, a[0], a[1]))
-        else:
-            self.view.set_status(key, '')
-            self.modifySbtBuildFile()
-            genSublimeCommand = buildCommand('gen-sublime')
-            genSublimeThread = CommandThread(
-                genSublimeCommand, self.ProjectBaseDir, True)
-            genSublimeThread.start()
-            self.handleGenSublimeThread(
-                genSublimeThread, 100, "GenSublime", "Gen Sublime")
+    def handleLiveThread(self, key, message, vv, i=0, dir=1):
+        a = self.animate(key, message, i, dir)
+        sublime.set_timeout(lambda: vv(a[0], a[1]))
 
-    def handleGenSublimeThread(self, thread, timeout, key, message, i=0, dir=1):
-        if thread.is_alive():
-            a = self.animate(key, message, i, dir)
-            sublime.set_timeout(
-                lambda: self.handleGenSublimeThread(thread, 100, key, message, a[0], a[1]))
-        else:
-            self.view.set_status(key, '')
-            self.sublime_command_line(
-                ['-a', self.ProjectBaseDir])
+    def gitterThread(self):
+        try:
+            g8Command = buildCommand('gitter', additionalData=[
+                self.selectedTemplateName, self.templateUserProps])
+            g8Thread = CommandThread(g8Command, self.projectPath, False)
+            g8Thread.start()
+            self.handleThread(
+                g8Thread, 100, "Giter", 'Giter Template generation', self.handleLiveThread, self.ensimeThread)
+        except subprocess.CalledProcessError:
+            self.logger.info("Gitter command not found")
+
+    def ensimeThread(self):
+        try:
+            sbtEnsimeCommand = buildCommand('ensime')
+            sbtEnsimeThread = CommandThread(
+                sbtEnsimeCommand, self.ProjectBaseDir, True)
+            sbtEnsimeThread.start()
+            self.handleThread(
+                sbtEnsimeThread, 100, "Ensime", "Ensime confiugration", self.handleLiveThread, self.genSublimeThread)
+        except subprocess.CalledProcessError:
+            self.logger.info("Ensime command not found")
+
+    def genSublimeThread(self):
+        self.modifySbtBuildFile()
+        genSublimeCommand = buildCommand('gen-sublime')
+        genSublimeThread = CommandThread(
+            genSublimeCommand, self.ProjectBaseDir, True)
+        genSublimeThread.start()
+        self.handleThread(
+            genSublimeThread, 100, "GenSublime", "Gen Sublime", self.handleLiveThread, self.openProject)
+
+    def openProject(self):
+        self.sublime_command_line(
+            ['-a', self.ProjectBaseDir])
 
     def animate(self, key, message, i, dir):
         before = i % 8
@@ -156,7 +154,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         sbtFileEditor = SbtBuildFileEditor(sbtFile)
         sbtFileEditor.simpleTransformationBatch(
             [('sublimeExternalSourceDirectoryName', '"ext-lib-src"'), ('sublimeTransitive', 'true')])
-        sbtFileEditor.transformUsingOtherKey(('sublimeExternalSourceDirectoryParent', 'baseDirectory'))
+        sbtFileEditor.transformUsingOtherKey(
+            ('sublimeExternalSourceDirectoryParent', 'baseDirectory'))
         sbtFile.close()
 
 
