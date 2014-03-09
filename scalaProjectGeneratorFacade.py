@@ -87,56 +87,55 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             self.view.set_status(key, '')
             nextStep()
 
-    def handleLiveThread(self, key, message, vv, i=0, dir=1):
-        a = self.animate(key, message, i, dir)
-        sublime.set_timeout(lambda: vv(a[0], a[1]))
+    def handleLiveThread(self, key, message, currentThread, i=0, dir=1):
+        def animate(i, dir):
+            before = i % 8
+            after = (7) - before
+            if not after:
+                dir = -1
+            if not before:
+                dir = 1
+            i += 1
+            self.view.status_message(
+                key, message + ' [%s=%s]' % (' ' * before, ' ' * after))
+            return (i, dir)
+
+        a = animate(i, dir)
+        sublime.set_timeout(lambda: currentThread(a[0], a[1]))
+
+    def _prepareAndRunThread(self, commandName, path, isShellUsed, statusMessage, nextStep, additionalData=[]):
+        command = buildCommand(commandName, additionalData)
+        thread = CommandThread(command, path, isShellUsed)
+        thread.start()
+        self.handleThread(
+            thread, 100, commandName, statusMessage, self.handleLiveThread, nextStep)
 
     def gitterThread(self):
         try:
-            g8Command = buildCommand('gitter', additionalData=[
-                self.selectedTemplateName, self.templateUserProps])
-            g8Thread = CommandThread(g8Command, self.projectPath, False)
-            g8Thread.start()
-            self.handleThread(
-                g8Thread, 100, "Giter", 'Giter Template generation', self.handleLiveThread, self.ensimeThread)
+            self._prepareAndRunThread(
+                'gitter', self.projectPath, False, 'Giter Template generation',
+                self.ensimeThread, additionalData=[self.selectedTemplateName, self.templateUserProps])
         except subprocess.CalledProcessError:
             self.logger.info("Gitter command not found")
 
     def ensimeThread(self):
         try:
-            sbtEnsimeCommand = buildCommand('ensime')
-            sbtEnsimeThread = CommandThread(
-                sbtEnsimeCommand, self.ProjectBaseDir, True)
-            sbtEnsimeThread.start()
-            self.handleThread(
-                sbtEnsimeThread, 100, "Ensime", "Ensime confiugration", self.handleLiveThread, self.genSublimeThread)
+            self._prepareAndRunThread(
+                'ensime', self.ProjectBaseDir, True, "Ensime confiugration", self.genSublimeThread)
         except subprocess.CalledProcessError:
             self.logger.info("Ensime command not found")
 
     def genSublimeThread(self):
-        self.modifySbtBuildFile()
-        genSublimeCommand = buildCommand('gen-sublime')
-        genSublimeThread = CommandThread(
-            genSublimeCommand, self.ProjectBaseDir, True)
-        genSublimeThread.start()
-        self.handleThread(
-            genSublimeThread, 100, "GenSublime", "Gen Sublime", self.handleLiveThread, self.openProject)
+        try:
+            self.modifySbtBuildFile()
+            self._prepareAndRunThread(
+                'gen-sublime', self.ProjectBaseDir, True, "Gen Sublime", self.openProject)
+        except subprocess.CalledProcessError:
+            self.looger.info("Giter command not found")
 
     def openProject(self):
         self.sublime_command_line(
             ['-a', self.ProjectBaseDir])
-
-    def animate(self, key, message, i, dir):
-        before = i % 8
-        after = (7) - before
-        if not after:
-            dir = -1
-        if not before:
-            dir = 1
-        i += 1
-        self.view.set_status(
-            key, message + ' [%s=%s]' % (' ' * before, ' ' * after))
-        return (i, dir)
 
     def get_sublime_path(self):
         if sublime.platform() == 'osx':
