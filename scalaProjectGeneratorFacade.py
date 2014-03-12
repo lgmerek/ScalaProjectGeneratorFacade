@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
 import subprocess
-import sys
 import re
 from array import *
 from .giterCommandThread import CommandThread
@@ -9,6 +8,7 @@ from .commandBuilders import buildCommand
 from .jsonDecoderBuilder import JsonDecoderBuilder
 from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
+from .utils import Utils
 from .generatorFacadeExceptions import GeneratorFacadeInitializationError
 from functools import *
 
@@ -64,11 +64,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def on_propetySelected(self, user_input):
         prop = self.templateDefaultProperties[self.propertyIndex]
-        g8ProjectDirName = ''
         if prop[0] == 'name':
-            g8ProjectDirName = re.sub("\s+", '-', user_input).lower()
-            self.logger.debug("g8ProjectDirName %s", g8ProjectDirName)
-            self.ProjectBaseDir = self.projectPath + '/' + g8ProjectDirName
+            self._buildProjectBaseDir(user_input)
         self.templateUserProps.append((prop[0], user_input))
         self.propertyIndex += 1
         if self.propertyIndex < len(self.templateDefaultProperties):
@@ -78,6 +75,11 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         else:
             self.propertyIndex = 0
             self.gitterThread()
+
+    def _buildProjectBaseDir(self, user_input):
+        g8ProjectDirName = re.sub("\s+", '-', user_input).lower()
+        self.logger.debug("g8ProjectDirName %s", g8ProjectDirName)
+        self.ProjectBaseDir = self.projectPath + '/' + g8ProjectDirName
 
     def handleThread(self, thread, timeout, key, message, handleLiveThread, nextStep, i=0, dir=1):
         if thread.is_alive():
@@ -96,7 +98,7 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             if not before:
                 dir = 1
             i += 1
-            self.view.status_message(
+            self.view.set_status(
                 key, message + ' [%s=%s]' % (' ' * before, ' ' * after))
             return (i, dir)
 
@@ -134,19 +136,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             self.looger.info("Giter command not found")
 
     def openProject(self):
-        self.sublime_command_line(
+        Utils.execute_on_sublime_command_line(
             ['-a', self.ProjectBaseDir])
-
-    def get_sublime_path(self):
-        if sublime.platform() == 'osx':
-            return findCommandPath('subl')
-        if sublime.platform() == 'linux':
-            return open('/proc/self/cmdline').read().split(chr(0))[0]
-        return sys.executable
-
-    def sublime_command_line(self, args):
-        args.insert(0, self.get_sublime_path())
-        return subprocess.Popen(args)
 
     def modifySbtBuildFile(self):
         sbtFile = open(self.ProjectBaseDir + "/build.sbt", "a")
@@ -156,9 +147,3 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         sbtFileEditor.transformUsingOtherKey(
             ('sublimeExternalSourceDirectoryParent', 'baseDirectory'))
         sbtFile.close()
-
-
-def findCommandPath(command):
-    rawOutput = subprocess.check_output(['which', command])
-    output = rawOutput.decode("utf-8")
-    return output[:-1]

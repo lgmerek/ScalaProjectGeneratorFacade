@@ -1,5 +1,4 @@
-import subprocess
-
+from .utils import Utils
 
 def buildCommand(commandName, additionalData=[]):
     if commandName == 'gitter':
@@ -12,7 +11,7 @@ def buildCommand(commandName, additionalData=[]):
 
 def _giterBuilder(additionalData):
     g8CommandBuilder = _GiterCommandBuilder(
-        findCommandPath("g8"), additionalData[0], additionalData[1])
+        Utils.findCommandPath("g8"), additionalData[0], additionalData[1])
     return g8CommandBuilder.buildGiterCommand()
 
 
@@ -37,16 +36,10 @@ class _GiterCommandBuilder():
 
 
 def _buildSbtEnsimeCommand():
-    ensimeCommand = findCommandPath('sbt') + ' "ensime generate"'
+    ensimeCommand = Utils.findCommandPath('sbt') + ' "ensime generate"'
     return ensimeCommand
 
 
 def _buildGenSublimeCommand():
-    genSublimeCommand = findCommandPath('sbt') + ' gen-sublime'
+    genSublimeCommand = Utils.findCommandPath('sbt') + ' gen-sublime'
     return genSublimeCommand
-
-
-def findCommandPath(command):
-    rawOutput = subprocess.check_output(['which', command])
-    output = rawOutput.decode("utf-8")
-    return output[:-1]
