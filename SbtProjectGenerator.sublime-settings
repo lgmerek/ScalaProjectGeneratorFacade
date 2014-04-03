@@ -1,0 +1,58 @@
+{
+  /*
+   * Name of the file which contains SBT templates in JSON format.
+   * Those templates are used by Giter8 plugin to genereate project skeleton
+   * The file must be placed in the root dir of the SbtProjectGeneartor plugin
+   *
+   */
+  "templates_file_name": "sbtTemplates.json",
+
+  /***** This section holds settings for SublimeGen Plugin *****
+   ***** For more information about SublimeGen go there: https://github.com/orrsella/sbt-sublime
+   ***** Normally the below settings are added manually to the build.sbt file, but as the build.sbt
+   ***** file is genereted itself during exection of SbtProjectGenerator those properties must be
+   ***** set in here
+  /*
+   * The name of the directory containing all external library source files.
+   *
+   */
+  "sublime_gen_external_source_dir": "ext-lib-src",
+
+  /*
+   * Where the external library sources directory will be located.
+   *
+   */
+  "sublime_gen_extenal_source_dir_parent": "baseDirectory",
+
+  /*
+   * Indicates whether dependencies should be added transitively (recursively) for all
+   * libraries (including the libraries that your own dependencies require – "your dependencies' dependencies").
+   * For large projects, this can amount to dozens of libraries pretty quickly,
+   * meaning that a lot of code will be searched and handled by Sublime.
+   *
+   */
+  "sublime_gen_transitiv": "",
+
+
+  /***** This section contains PATH settings for all used executables *****
+   ***** SbtProjectGenerator plugin will try to auto discover all executable paths.
+   ***** If it fails, check sbtScala.log file in plugin's root dir for more information
+   ***** Then enter needed paths below
+  /*
+   * Path to Giter8 executable (see more here: https://github.com/n8han/giter8)
+   *
+   */
+  "g8_executable_path": "",
+
+  /*
+   * Path to SBT executable (see more here: http://www.scala-sbt.org)
+   *
+   */
+  "sbt_executable_path": "",
+
+  /*
+   * Path to Sublime Text executable
+   *
+   */
+  "sublime_executable_path": ""
+}

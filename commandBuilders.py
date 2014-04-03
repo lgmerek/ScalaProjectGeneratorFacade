@@ -1,17 +1,15 @@
-from .utils import Utils
-
-def buildCommand(commandName, additionalData=[]):
+def buildCommand(commandName, execs, additionalData=[]):
     if commandName == 'gitter':
-        return _giterBuilder(additionalData)
+        return _giterBuilder(execs.GITER8, additionalData)
     elif commandName == 'ensime':
-        return _buildSbtEnsimeCommand()
+        return _buildSbtEnsimeCommand(execs.SBT)
     elif commandName == 'gen-sublime':
-        return _buildGenSublimeCommand()
+        return _buildGenSublimeCommand(execs.SBT)
 
 
-def _giterBuilder(additionalData):
+def _giterBuilder(g8_exec, additionalData):
     g8CommandBuilder = _GiterCommandBuilder(
-        Utils.findCommandPath("g8"), additionalData[0], additionalData[1])
+        g8_exec[2]['executable_path'], additionalData[0], additionalData[1])
     return g8CommandBuilder.buildGiterCommand()
 
 
@@ -35,11 +33,11 @@ class _GiterCommandBuilder():
         return param
 
 
-def _buildSbtEnsimeCommand():
-    ensimeCommand = Utils.findCommandPath('sbt') + ' "ensime generate"'
+def _buildSbtEnsimeCommand(sbt_exec):
+    ensimeCommand = sbt_exec[2]['executable_path'] + ' "ensime generate"'
     return ensimeCommand
 
 
-def _buildGenSublimeCommand():
-    genSublimeCommand = Utils.findCommandPath('sbt') + ' gen-sublime'
+def _buildGenSublimeCommand(sbt_exec):
+    genSublimeCommand = sbt_exec[2]['executable_path'] + ' gen-sublime'
     return genSublimeCommand

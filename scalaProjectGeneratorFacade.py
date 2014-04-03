@@ -9,6 +9,8 @@ from .jsonDecoderBuilder import JsonDecoderBuilder
 from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
 from .utils import Utils
+from .utils import EXECUTABLES
+from .settings import SettingsManager
 from .generatorFacadeExceptions import GeneratorFacadeInitializationError
 from functools import *
 
@@ -27,12 +29,15 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def __initProjectGeneratorFacade(self):
         self.logger.info("Generator initialization started")
+        self.settingsManager = SettingsManager(EXECUTABLES)
+        self.settingsManager.create_executable_paths()
         self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
         self.sbtTemplates = [
             self.ProjectNamePrefix + t for t in
             self.jsonDataDecoder.getProjectTemplatesNames()]
 
     def run(self, edit):
+        LoggerFacade.clear_log_file()
         self.logger = LoggerFacade.getLogger()
         self.logger.debug(
             '\n\n----- Scala Project Generator Facade has started -----\n\n')
@@ -106,7 +111,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         sublime.set_timeout(lambda: currentThread(a[0], a[1]))
 
     def _prepareAndRunThread(self, commandName, path, isShellUsed, statusMessage, nextStep, additionalData=[]):
-        command = buildCommand(commandName, additionalData)
+        command = buildCommand(commandName,
+                               self.settingsManager.get_executables(), additionalData)
         thread = CommandThread(command, path, isShellUsed)
         thread.start()
         self.handleThread(
@@ -137,7 +143,7 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def openProject(self):
         Utils.execute_on_sublime_command_line(
-            ['-a', self.ProjectBaseDir])
+            ['-a', self.ProjectBaseDir], self.settingsManager.get_executables())
 
     def modifySbtBuildFile(self):
         sbtFile = open(self.ProjectBaseDir + "/build.sbt", "a")
