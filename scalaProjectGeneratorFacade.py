@@ -1,6 +1,5 @@
 import sublime
 import sublime_plugin
-import subprocess
 import re
 from array import *
 from .giterCommandThread import CommandThread
@@ -119,27 +118,18 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             thread, 100, commandName, statusMessage, self.handleLiveThread, nextStep)
 
     def gitterThread(self):
-        try:
             self._prepareAndRunThread(
                 'gitter', self.projectPath, False, 'Giter Template generation',
                 self.ensimeThread, additionalData=[self.selectedTemplateName, self.templateUserProps])
-        except subprocess.CalledProcessError:
-            self.logger.info("Gitter command not found")
 
     def ensimeThread(self):
-        try:
             self._prepareAndRunThread(
                 'ensime', self.ProjectBaseDir, True, "Ensime confiugration", self.genSublimeThread)
-        except subprocess.CalledProcessError:
-            self.logger.info("Ensime command not found")
 
     def genSublimeThread(self):
-        try:
             self.modifySbtBuildFile()
             self._prepareAndRunThread(
                 'gen-sublime', self.ProjectBaseDir, True, "Gen Sublime", self.openProject)
-        except subprocess.CalledProcessError:
-            self.looger.info("Giter command not found")
 
     def openProject(self):
         Utils.execute_on_sublime_command_line(

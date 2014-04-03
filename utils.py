@@ -1,6 +1,4 @@
 import subprocess
-import sublime
-import sys
 
 
 class EXECUTABLES(object):

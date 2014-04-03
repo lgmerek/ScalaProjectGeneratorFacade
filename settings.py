@@ -36,7 +36,7 @@ class SettingsManager:
             except subprocess.CalledProcessError:
                 failed.append(e)
                 self.logger.warning(
-                    "Auto-discovery for command %s has failed", e)
+                    "Auto-discovery for command %s has failed", e[0])
         return failed
 
     def _read_executable_path_from_properties(self, failedExecutables):
