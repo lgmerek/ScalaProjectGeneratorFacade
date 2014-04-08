@@ -1,17 +1,8 @@
 import unittest
-import subprocess
-from .utils import Utils
 from .commandBuilders import _GiterCommandBuilder
 
 
 class TestCommandBuilders(unittest.TestCase):
-
-    def testFindNonExistingCommandPath(self):
-        self.assertRaises(subprocess.CalledProcessError, Utils.findCommandPath, 'foo')
-
-    def testFindExistingCommandPath(self):
-        output = Utils.findCommandPath('ls')
-        assert output
 
     def testGiterCommandBuilderProperties(self):
         g8Path = "g8Path"

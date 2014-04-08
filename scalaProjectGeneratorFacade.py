@@ -1,13 +1,13 @@
 import sublime
 import sublime_plugin
 import re
+import subprocess
 from array import *
 from .giterCommandThread import CommandThread
 from .commandBuilders import buildCommand
 from .jsonDecoderBuilder import JsonDecoderBuilder
 from .sbtBuildFileEditor import SbtBuildFileEditor
 from .logger import LoggerFacade
-from .utils import Utils
 from .utils import EXECUTABLES
 from .settings import SettingsManager
 from .generatorFacadeExceptions import GeneratorFacadeInitializationError
@@ -133,8 +133,12 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
                 'gen-sublime', self.ProjectBaseDir, True, "Gen Sublime", self.openProject)
 
     def openProject(self):
-        Utils.execute_on_sublime_command_line(
+        self._execute_on_sublime_command_line(
             ['-a', self.ProjectBaseDir], self.settingsManager.get_executables())
+
+    def _execute_on_sublime_command_line(self, args, execs):
+        args.insert(0, execs.SUBLIME[2]['executable_path'])
+        return subprocess.Popen(args)
 
     def modifySbtBuildFile(self):
         sbtFile = open(self.ProjectBaseDir + "/build.sbt", "a")

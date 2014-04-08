@@ -1,5 +1,6 @@
 import unittest
 import sublime
+import subprocess
 from .settings import SettingsManager
 from .generatorFacadeExceptions import GeneratorFacadeInitializationError
 
@@ -13,6 +14,15 @@ class TestSettingsManager(unittest.TestCase):
 
     def tearDown(self):
         self.settings.set('sbt_executable_path', '')
+
+    def testFindNonExistingCommandPath(self):
+        sm = SettingsManager(EXE_CORRECT)
+        self.assertRaises(subprocess.CalledProcessError, sm._findCommandPath, 'foo')
+
+    def testFindExistingCommandPath(self):
+        sm = SettingsManager(EXE_CORRECT)
+        output = sm._findCommandPath('ls')
+        assert output
 
     def test_auto_discover_correct_executable_path(self):
         sm = SettingsManager(EXE_CORRECT)
