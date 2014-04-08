@@ -31,7 +31,7 @@
    * meaning that a lot of code will be searched and handled by Sublime.
    *
    */
-  "sublime_gen_transitiv": "",
+  "sublime_gen_transitiv": "true",
 
 
   /***** This section contains PATH settings for all used executables *****

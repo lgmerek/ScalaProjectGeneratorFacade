@@ -26,6 +26,9 @@ class SettingsManager:
     def get_executables(self):
         return self.executables
 
+    def get_setting(self, key):
+        return self.settings.get(key)
+
     def _auto_discover_executable_path(self):
         self.logger.info("Trying to auto-discover paths:")
         failed = []

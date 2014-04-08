@@ -30,7 +30,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
         self.logger.info("Generator initialization started")
         self.settingsManager = SettingsManager(EXECUTABLES)
         self.settingsManager.create_executable_paths()
-        self.jsonDataDecoder = JsonDecoderBuilder().createJsonDecoder()
+        self.jsonDataDecoder = JsonDecoderBuilder(
+            self.settingsManager).createJsonDecoder()
         self.sbtTemplates = [
             self.ProjectNamePrefix + t for t in
             self.jsonDataDecoder.getProjectTemplatesNames()]
@@ -138,8 +139,16 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
     def modifySbtBuildFile(self):
         sbtFile = open(self.ProjectBaseDir + "/build.sbt", "a")
         sbtFileEditor = SbtBuildFileEditor(sbtFile)
+
         sbtFileEditor.simpleTransformationBatch(
-            [('sublimeExternalSourceDirectoryName', '"ext-lib-src"'), ('sublimeTransitive', 'true')])
+            [('sublimeExternalSourceDirectoryName',
+                '"' + self._getSettingByKey('sublime_gen_external_source_dir') + '"'),
+             ('sublimeTransitive',
+              self._getSettingByKey('sublime_gen_transitiv'))])
         sbtFileEditor.transformUsingOtherKey(
-            ('sublimeExternalSourceDirectoryParent', 'baseDirectory'))
+            ('sublimeExternalSourceDirectoryParent',
+                self._getSettingByKey('sublime_gen_extenal_source_dir_parent')))
         sbtFile.close()
+
+    def _getSettingByKey(self, key):
+        return self.settingsManager.get_setting(key)
