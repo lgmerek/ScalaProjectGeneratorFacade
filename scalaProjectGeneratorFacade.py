@@ -56,6 +56,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
             return 0
         self.selectedTemplateName = (
             self.sbtTemplates[user_input])[len(self.ProjectNamePrefix):]
+        self.logger.debug("Selected template: %s", self.selectedTemplateName)
+
         self.templateDefaultProperties = self.jsonDataDecoder.getTemplateDefaultProperties(
             self.selectedTemplateName)
         self.view.window().show_input_panel(
@@ -83,8 +85,8 @@ class ScalaProjectGeneratorFacadeCommand(sublime_plugin.TextCommand):
 
     def _buildProjectBaseDir(self, user_input):
         g8ProjectDirName = re.sub("\s+", '-', user_input).lower()
-        self.logger.debug("g8ProjectDirName %s", g8ProjectDirName)
         self.ProjectBaseDir = self.projectPath + '/' + g8ProjectDirName
+        self.logger.debug("Project Base Dir Path: %s", self.ProjectBaseDir)
 
     def handleThread(self, thread, timeout, key, message, handleLiveThread, nextStep, i=0, dir=1):
         if thread.is_alive():

@@ -1,3 +1,9 @@
+from .logger import LoggerFacade
+
+
+logger = LoggerFacade.getLogger()
+
+
 def buildCommand(commandName, execs, additionalData=[]):
     if commandName == 'gitter':
         return _giterBuilder(execs.GITER8, additionalData)
@@ -26,6 +32,7 @@ class _GiterCommandBuilder():
         g8Command.append(self.templateName)
         for p in self.templateUserProperties:
             g8Command.append(self.__buildParam(p))
+        logger.debug("g8 command: %s", g8Command)
         return g8Command
 
     def __buildParam(self, p):
@@ -35,9 +42,11 @@ class _GiterCommandBuilder():
 
 def _buildSbtEnsimeCommand(sbt_exec):
     ensimeCommand = sbt_exec[2]['executable_path'] + ' "ensime generate"'
+    logger.debug("Ensime command: %s", ensimeCommand)
     return ensimeCommand
 
 
 def _buildGenSublimeCommand(sbt_exec):
     genSublimeCommand = sbt_exec[2]['executable_path'] + ' gen-sublime'
+    logger.debug("Sublime command: %s", genSublimeCommand)
     return genSublimeCommand

@@ -14,11 +14,14 @@ class JsonDecoderBuilder:
             return jsonFile.read().replace('\n', ' ')
 
     def createJsonDecoder(self):
-        self.logger.debug("Json Decoder creation")
+        self.logger.debug("Creating JSON Decoder")
         try:
             jsonData = self.__readJsonDataFromFile(
                 self.settingsManager.get_setting('templates_file_name'))
+            return SbtTemplateDataJsonDecoder(jsonData)
         except (OSError, IOError) as e:
             raise GeneratorFacadeInitializationError(
-                'Generator Facade Initilization Error -> ', str(e))
-        return SbtTemplateDataJsonDecoder(jsonData)
+                'Generator Facade Initilization Error [IO]: ', str(e))
+        except (ValueError) as e:
+            raise GeneratorFacadeInitializationError(
+                'Generator Facade Initilization Error [JSON]: ', str(e))
